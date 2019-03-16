@@ -40,64 +40,71 @@ namespace IR_milestone
         void Fetch()
         {
             int counter = 0;
-          while ((counter<100)&&(templinks.Count>0))
+            while ((counter < 100) && (templinks.Count > 0))
             {
-                string tempurl = "";
-                tempurl = templinks[0];
-                templinks.RemoveAt(0);
-                // Create a new 'WebRequest' object to the mentioned URL.
-                 myWebRequest = WebRequest.Create(tempurl);
-                // The response object of 'WebRequest' is assigned to a WebResponse' variable.
-                 myWebResponse = myWebRequest.GetResponse();
-                 streamResponse = myWebResponse.GetResponseStream();
-                 sReader = new StreamReader(streamResponse);
-                string rString = sReader.ReadToEnd();
-
-
-                //Parse the URL – HTML parser
-                //Extract links from it to other docs(URLs)
-                //Sample code for parsing the page and extracting link from it
-                //at first add reference to mshtml from solution explorer
-
-                HTMLDocument y = new HTMLDocument();
-                IHTMLDocument2 doc = (IHTMLDocument2)y;
-                doc.write(rString);
-                //doc.links:haya5ud kol el tags 
-                IHTMLElementCollection elements = doc.links;
-                
-                //IHTMLElement : hatgebli kol element fl html 
-                foreach (IHTMLElement el in elements)
+                try
                 {
-                    string link = (string)el.getAttribute("href", 0);
+                    string tempurl = "";
+                    tempurl = templinks[0];
+                    templinks.RemoveAt(0);
+                    // Create a new 'WebRequest' object to the mentioned URL.
+                    myWebRequest = WebRequest.Create(tempurl);
+                    // The response object of 'WebRequest' is assigned to a WebResponse' variable.
+                    myWebResponse = myWebRequest.GetResponse();
+                    streamResponse = myWebResponse.GetResponseStream();
+                    sReader = new StreamReader(streamResponse);
+                    string rString = sReader.ReadToEnd();
 
-                    //5.For each extracted URL
-                    //Ensure it passes certain URL filter tests
-                    //Check if it is already exists (duplicate URL elimination)
-                    //lazm yebd2 b http 
-                    //domain backslach page 
-                    if (link.StartsWith("http"))
+
+                    //Parse the URL – HTML parser
+                    //Extract links from it to other docs(URLs)
+                    //Sample code for parsing the page and extracting link from it
+                    //at first add reference to mshtml from solution explorer
+
+                    HTMLDocument y = new HTMLDocument();
+                    IHTMLDocument2 doc = (IHTMLDocument2)y;
+                    doc.write(rString);
+                    //doc.links:haya5ud kol el tags 
+                    IHTMLElementCollection elements = doc.links;
+
+                    //IHTMLElement : hatgebli kol element fl html 
+                    foreach (IHTMLElement el in elements)
                     {
-                        if (!(links.Contains(link)))
+                        string link = (string)el.getAttribute("href", 0);
+
+                        //5.For each extracted URL
+                        //Ensure it passes certain URL filter tests
+                        //Check if it is already exists (duplicate URL elimination)
+                        //lazm yebd2 b http 
+                        //domain backslach page 
+                        if (link.StartsWith("http"))
                         {
-                            links.Add(link);
-                            templinks.Add(link);
+                            if (!(links.Contains(link)))
+                            {
+                                links.Add(link);
+                                templinks.Add(link);
+                            }
                         }
-                    }
-                    else if (link.StartsWith("/"))
-                    {
-                         string temp = tempurl + link;
-                        if (!(links.Contains(temp)))
+                        else if (link.StartsWith("/"))
                         {
-                            links.Add(temp);
-                            templinks.Add(temp);
+                            string temp = tempurl + link;
+                            if (!(links.Contains(temp)))
+                            {
+                                links.Add(temp);
+                                templinks.Add(temp);
+                            }
                         }
+
                     }
+
+
+                    counter++;
 
                 }
-                
+                catch
+                {
 
-                counter++;
-
+                }
             }
             streamResponse.Close();
             sReader.Close();
