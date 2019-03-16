@@ -26,27 +26,33 @@ namespace IR_milestone
         List<string> links = new List<string>();
         Thread thread;
         SqlConnection con;
+        string connectionString = "Data Source=ABANOUB\\SQLEXPRESS;Initial Catalog=master;Integrated Security=True";
         public Form1()
         {
             InitializeComponent();
 
             //1.Put a set of known sites on a queue(Seeds).
-            string URL = "http://www.egypttoday.com";
+            string URL = "http://www.bbc.com";
 
             templinks.Add(URL);
             //Fetch the document at the URL.
             //Fetch();
             //Parse the URL – HTML parser
             //Extract links from it to other docs(URLs)
-            thread = new Thread(Fetch);
+            //thread = new Thread(Fetch);
+            //thread.Start();
 
+
+        }
+        private void Form1_Load(object sender, EventArgs e)
+        {
 
         }
         //•	Sample Code for fetching the page (C#)
         void Fetch()
         {
             int counter = 0;
-            while ((counter < 100) && (templinks.Count > 0))
+            while ((counter < 10) && (templinks.Count > 0))
             {
                 try
                 {
@@ -60,7 +66,6 @@ namespace IR_milestone
                     streamResponse = myWebResponse.GetResponseStream();
                     sReader = new StreamReader(streamResponse);
                     string rString = sReader.ReadToEnd();
-                    insert(tempurl, rString);
 
                     //Parse the URL – HTML parser
                     //Extract links from it to other docs(URLs)
@@ -89,6 +94,8 @@ namespace IR_milestone
                             {
                                 links.Add(link);
                                 templinks.Add(link);
+                                insert(link, rString);
+
                             }
                         }
                         else if (link.StartsWith("/"))
@@ -98,8 +105,19 @@ namespace IR_milestone
                             {
                                 links.Add(temp);
                                 templinks.Add(temp);
+                                insert(temp, rString);
+
                             }
                         }
+                        //else if(link.StartsWith("about:/"))
+                        //{
+                        //    string temp = tempurl + link.Substring(6);
+                        //    if (!(links.Contains(temp)))
+                        //    {
+                        //        links.Add(temp);
+                        //        templinks.Add(temp);
+                        //    }
+                        //}
 
                     }
 
@@ -107,52 +125,45 @@ namespace IR_milestone
                     counter++;
 
                 }
-                catch
+                catch(Exception e)
                 {
-
+                    
+                    //MessageBox.Show(e.ToString());
                 }
 
-                listBox1.DataSource = null;
-                listBox1.DataSource = links;
+                //
+                //listBox1.DataSource = links;
             }
             streamResponse.Close();
             sReader.Close();
             myWebResponse.Close();
-
+            listBox1.DataSource = null;
             listBox1.DataSource = links;
-        }
-
-        private void Form1_Load(object sender, EventArgs e)
-        {
+            Start.Enabled = true;
 
         }
 
-        private void button1_Click(object sender, EventArgs e)
-        {
-            con = new SqlConnection("Data Source=DONIA\\SQLEXPRESS;Initial Catalog=IRMilestone;Integrated Security=True");
-            con.Open();
-            thread.Start();
-            
-        }
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-            thread.Abort();
-            con.Close();
-        }
-
-         
         private void insert (string url,string html)
         {
             
             string insertStr = "insert into documents (URL,CONTENT)values(@url,@html)";
-            SqlCommand cmd = new SqlCommand(insertStr);
+            SqlCommand cmd = new SqlCommand(insertStr,con);
             
             SqlParameter parURL = new SqlParameter("@url",url);
             SqlParameter parcontent = new SqlParameter("@html", html);
             cmd.Parameters.Add(parURL);
             cmd.Parameters.Add(parcontent);
             cmd.ExecuteNonQuery();
+        }
+
+        private void Start_Click(object sender, EventArgs e)
+        {
+            Start.Enabled = false;
+            //thread.Start();
+            con = new SqlConnection(connectionString);
+            con.Open();
+            Fetch();
+            con.Close();
         }
     }
 } 
