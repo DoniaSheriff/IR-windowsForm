@@ -10,6 +10,9 @@ using System.Windows.Forms;
 using System.IO;
 using System.Net;
 using mshtml;
+using System.Threading;
+using System.Data;
+using System.Data.SqlClient;
 
 namespace IR_milestone
 {
@@ -21,6 +24,8 @@ namespace IR_milestone
         Stream streamResponse;
         StreamReader sReader;
         List<string> links = new List<string>();
+        Thread thread;
+        SqlConnection con;
         public Form1()
         {
             InitializeComponent();
@@ -30,9 +35,10 @@ namespace IR_milestone
 
             templinks.Add(URL);
             //Fetch the document at the URL.
-            Fetch();
+            //Fetch();
             //Parse the URL – HTML parser
             //Extract links from it to other docs(URLs)
+            thread = new Thread(Fetch);
 
 
         }
@@ -54,7 +60,7 @@ namespace IR_milestone
                     streamResponse = myWebResponse.GetResponseStream();
                     sReader = new StreamReader(streamResponse);
                     string rString = sReader.ReadToEnd();
-
+                    insert(tempurl, rString);
 
                     //Parse the URL – HTML parser
                     //Extract links from it to other docs(URLs)
@@ -74,7 +80,7 @@ namespace IR_milestone
 
                         //5.For each extracted URL
                         //Ensure it passes certain URL filter tests
-                        //Check if it is already exists (duplicate URL elimination)
+                        //////Check if it is already exists (duplicate URL elimination)
                         //lazm yebd2 b http 
                         //domain backslach page 
                         if (link.StartsWith("http"))
@@ -105,6 +111,9 @@ namespace IR_milestone
                 {
 
                 }
+
+                listBox1.DataSource = null;
+                listBox1.DataSource = links;
             }
             streamResponse.Close();
             sReader.Close();
@@ -120,7 +129,30 @@ namespace IR_milestone
 
         private void button1_Click(object sender, EventArgs e)
         {
+            con = new SqlConnection("Data Source=DONIA\\SQLEXPRESS;Initial Catalog=IRMilestone;Integrated Security=True");
+            con.Open();
+            thread.Start();
+            
+        }
 
+        private void button2_Click(object sender, EventArgs e)
+        {
+            thread.Abort();
+            con.Close();
+        }
+
+         
+        private void insert (string url,string html)
+        {
+            
+            string insertStr = "insert into documents (URL,CONTENT)values(@url,@html)";
+            SqlCommand cmd = new SqlCommand(insertStr);
+            
+            SqlParameter parURL = new SqlParameter("@url",url);
+            SqlParameter parcontent = new SqlParameter("@html", html);
+            cmd.Parameters.Add(parURL);
+            cmd.Parameters.Add(parcontent);
+            cmd.ExecuteNonQuery();
         }
     }
-}
+} 
