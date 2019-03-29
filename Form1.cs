@@ -18,7 +18,7 @@ namespace IR_milestone
 {
     public partial class Form1 : Form
     {
-        List<string> templinks = new List<string>();
+        Queue<string> templinks = new Queue<string>();
         WebRequest myWebRequest;
         WebResponse myWebResponse;
         Stream streamResponse;
@@ -26,15 +26,16 @@ namespace IR_milestone
         List<string> links = new List<string>();
         Thread thread;
         SqlConnection con;
-        string connectionString = "Data Source=ABANOUB\\SQLEXPRESS;Initial Catalog=master;Integrated Security=True";
+        string connectionString = "Data Source=ABANOUB\\SQLEXPRESS;Initial Catalog=College;Integrated Security=True";
         public Form1()
         {
             InitializeComponent();
 
             //1.Put a set of known sites on a queue(Seeds).
-            string URL = "http://www.bbc.com";
-
-            templinks.Add(URL);
+            
+            templinks.Enqueue("http://www.wikipedia.org");
+            templinks.Enqueue("http://www.bbc.com");
+            templinks.Enqueue("http://www.cnn.com");
             //Fetch the document at the URL.
             //Fetch();
             //Parse the URL – HTML parser
@@ -52,13 +53,11 @@ namespace IR_milestone
         void Fetch()
         {
             int counter = 0;
-            while ((counter < 10) && (templinks.Count > 0))
+            while(templinks.Count!=0 ||counter<3020)
             {
                 try
                 {
-                    string tempurl = "";
-                    tempurl = templinks[0];
-                    templinks.RemoveAt(0);
+                    string tempurl = templinks.Dequeue();
                     // Create a new 'WebRequest' object to the mentioned URL.
                     myWebRequest = WebRequest.Create(tempurl);
                     // The response object of 'WebRequest' is assigned to a WebResponse' variable.
@@ -75,6 +74,7 @@ namespace IR_milestone
                     HTMLDocument y = new HTMLDocument();
                     IHTMLDocument2 doc = (IHTMLDocument2)y;
                     doc.write(rString);
+                    
                     //doc.links:haya5ud kol el tags 
                     IHTMLElementCollection elements = doc.links;
 
@@ -82,20 +82,31 @@ namespace IR_milestone
                     foreach (IHTMLElement el in elements)
                     {
                         string link = (string)el.getAttribute("href", 0);
-
+                        string document = el.document.body.innertext;
+                        if (el.lang!=null && ((el.lang).ToLower()!= "en-us" || (el.lang).ToLower() != "ar"))
+                            continue;
                         //5.For each extracted URL
                         //Ensure it passes certain URL filter tests
                         //////Check if it is already exists (duplicate URL elimination)
                         //lazm yebd2 b http 
                         //domain backslach page 
-                        if (link.StartsWith("http"))
+                        if (link.StartsWith("https://l."))
+                            continue;
+                        else if (link.StartsWith("http"))
                         {
                             if (!(links.Contains(link)))
                             {
-                                links.Add(link);
-                                templinks.Add(link);
-                                insert(link, rString);
-
+                                try {
+                                    insert(link, document);
+                                    links.Add(link);
+                                    templinks.Enqueue(link);
+                                    counter++;
+                                    }
+                                
+                                catch (Exception e)
+                                    {
+                                         System.Diagnostics.Debug.WriteLine("------------\n" + e.ToString() + "\n------------");
+                                    }
                             }
                         }
                         else if (link.StartsWith("/"))
@@ -103,36 +114,26 @@ namespace IR_milestone
                             string temp = tempurl + link;
                             if (!(links.Contains(temp)))
                             {
-                                links.Add(temp);
-                                templinks.Add(temp);
-                                insert(temp, rString);
+                                try
+                                {
+                                    insert(link, document);
+                                    links.Add(link);
+                                    templinks.Enqueue(link);
+                                    counter++;
+                                }
 
+                                catch (Exception e)
+                                {
+                                    System.Diagnostics.Debug.WriteLine("------------\n" + e.ToString() + "\n------------");
+                                }
                             }
                         }
-                        //else if(link.StartsWith("about:/"))
-                        //{
-                        //    string temp = tempurl + link.Substring(6);
-                        //    if (!(links.Contains(temp)))
-                        //    {
-                        //        links.Add(temp);
-                        //        templinks.Add(temp);
-                        //    }
-                        //}
-
                     }
-
-
-                    counter++;
-
                 }
                 catch(Exception e)
                 {
-                    
-                    //MessageBox.Show(e.ToString());
+                    System.Diagnostics.Debug.WriteLine("------------\n"+e.ToString()+ "\n------------" + counter.ToString());
                 }
-
-                //
-                //listBox1.DataSource = links;
             }
             streamResponse.Close();
             sReader.Close();
@@ -146,7 +147,7 @@ namespace IR_milestone
         private void insert (string url,string html)
         {
             
-            string insertStr = "insert into documents (URL,CONTENT)values(@url,@html)";
+            string insertStr = "insert into Documents (URL,Content)values(@url,@html)";
             SqlCommand cmd = new SqlCommand(insertStr,con);
             
             SqlParameter parURL = new SqlParameter("@url",url);
@@ -164,6 +165,7 @@ namespace IR_milestone
             con.Open();
             Fetch();
             con.Close();
+            MessageBox.Show("done");
         }
     }
 } 
