@@ -1,59 +1,57 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 using System.Net;
 using mshtml;
 using System.Threading;
-using System.Data;
 using System.Data.SqlClient;
 
 namespace IR_milestone
 {
     public partial class Form1 : Form
     {
-        Queue<string> templinks = new Queue<string>();
         WebRequest myWebRequest;
         WebResponse myWebResponse;
         Stream streamResponse;
         StreamReader sReader;
         List<string> links = new List<string>();
-        Thread thread;
         SqlConnection con;
-        string connectionString = "Data Source=ABANOUB\\SQLEXPRESS;Initial Catalog=College;Integrated Security=True";
+        static string connectionString = "Data Source=ABANOUB\\SQLEXPRESS;Initial Catalog=College;Integrated Security=True";
         public Form1()
         {
             InitializeComponent();
 
             //1.Put a set of known sites on a queue(Seeds).
-            
-            templinks.Enqueue("http://www.wikipedia.org");
-            templinks.Enqueue("http://www.bbc.com");
-            templinks.Enqueue("http://www.cnn.com");
             //Fetch the document at the URL.
-            //Fetch();
             //Parse the URL – HTML parser
             //Extract links from it to other docs(URLs)
-            //thread = new Thread(Fetch);
-            //thread.Start();
-
-
         }
         private void Form1_Load(object sender, EventArgs e)
         {
 
         }
-        //•	Sample Code for fetching the page (C#)
-        void Fetch()
+        void startThread()
         {
+            var thread1 = new Thread(() => Fetch("http://www.wikipedia.org"));
+            thread1.Start();
+            var thread2 = new Thread(() => Fetch("http://www.bbc.com"));
+            thread2.Start();
+            var thread3 = new Thread(() => Fetch("http://www.cnn.com"));
+            thread3.Start();
+
+            thread1.Join();
+            thread2.Join();
+            thread3.Join();
+
+        }
+        //•	Sample Code for fetching the page (C#)
+        void Fetch(string seed)
+        {
+            Queue<string> templinks = new Queue<string>();
+            templinks.Enqueue(seed);
             int counter = 0;
-            while(templinks.Count!=0 ||counter<3020)
+            while(templinks.Count!=0 && counter<2000)
             {
                 try
                 {
@@ -94,7 +92,7 @@ namespace IR_milestone
                             continue;
                         else if (link.StartsWith("http"))
                         {
-                            if (!(links.Contains(link)))
+                            //if (!(links.Contains(link)))
                             {
                                 try {
                                     insert(link, document);
@@ -112,7 +110,7 @@ namespace IR_milestone
                         else if (link.StartsWith("/"))
                         {
                             string temp = tempurl + link;
-                            if (!(links.Contains(temp)))
+                            //if (!(links.Contains(temp)))
                             {
                                 try
                                 {
@@ -138,33 +136,43 @@ namespace IR_milestone
             streamResponse.Close();
             sReader.Close();
             myWebResponse.Close();
-            listBox1.DataSource = null;
-            listBox1.DataSource = links;
-            Start.Enabled = true;
-
         }
-
-        private void insert (string url,string html)
+        private static void insert(string url, string html)
         {
-            
-            string insertStr = "insert into Documents (URL,Content)values(@url,@html)";
-            SqlCommand cmd = new SqlCommand(insertStr,con);
-            
-            SqlParameter parURL = new SqlParameter("@url",url);
-            SqlParameter parcontent = new SqlParameter("@html", html);
-            cmd.Parameters.Add(parURL);
-            cmd.Parameters.Add(parcontent);
-            cmd.ExecuteNonQuery();
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    string insertStr = "insert into Documents (URL,Content)values(@url,@html)";
+                    SqlCommand cmd = new SqlCommand(insertStr, connection);
+                    SqlParameter parURL = new SqlParameter("@url", url);
+                    SqlParameter parcontent = new SqlParameter("@html", html);
+                    cmd.Parameters.Add(parURL);
+                    cmd.Parameters.Add(parcontent);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+                catch (InvalidOperationException e)
+                {
+                    System.Diagnostics.Debug.WriteLine("------------\n" + e.ToString());
+                }
+                catch (SqlException e)
+                {
+                    System.Diagnostics.Debug.WriteLine("------------\n" + e.ToString());
+                }
+                catch (ArgumentException e)
+                {
+                    System.Diagnostics.Debug.WriteLine("------------\n" + e.ToString());
+                }
+            }
         }
-
         private void Start_Click(object sender, EventArgs e)
         {
             Start.Enabled = false;
-            //thread.Start();
-            con = new SqlConnection(connectionString);
-            con.Open();
-            Fetch();
-            con.Close();
+            startThread();
+            listBox1.DataSource = null;
+            listBox1.DataSource = links;
+            Start.Enabled = true;
             MessageBox.Show("done");
         }
     }
