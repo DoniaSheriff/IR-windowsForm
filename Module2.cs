@@ -407,5 +407,32 @@ namespace IR_milestone
                 }
             }
         }
+        public string Soundex(string word)
+        {
+            const string soundexAlphabet = "0123012#02245501262301#202";
+            string soundexString = "";
+            char lastSoundexChar = '?';
+
+            foreach (var c in from ch in word
+                              where ch >= 'a' &&
+                                    ch <= 'z' &&
+                                    soundexString.Length < 4
+                              select ch)
+            {
+                char thisSoundexChar = soundexAlphabet[c - 'a'];
+
+                if (soundexString.Length == 0)
+                    soundexString += c;
+                else if (thisSoundexChar == '#')
+                    continue;
+                else if (thisSoundexChar != '0' &&
+                         thisSoundexChar != lastSoundexChar)
+                    soundexString += thisSoundexChar;
+
+                lastSoundexChar = thisSoundexChar;
+            }
+
+            return soundexString.PadRight(4, '0');
+        }
     }
 }

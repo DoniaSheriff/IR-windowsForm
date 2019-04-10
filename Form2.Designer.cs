@@ -28,25 +28,38 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.button1 = new System.Windows.Forms.Button();
+            this.InvertedIndexButton = new System.Windows.Forms.Button();
+            this.SoundexButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
-            // button1
+            // InvertedIndexButton
             // 
-            this.button1.Location = new System.Drawing.Point(634, 130);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 0;
-            this.button1.Text = "button1";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.InvertedIndexButton.Enabled = false;
+            this.InvertedIndexButton.Location = new System.Drawing.Point(12, 12);
+            this.InvertedIndexButton.Name = "InvertedIndexButton";
+            this.InvertedIndexButton.Size = new System.Drawing.Size(159, 49);
+            this.InvertedIndexButton.TabIndex = 0;
+            this.InvertedIndexButton.Text = "InvertedIndex";
+            this.InvertedIndexButton.UseVisualStyleBackColor = true;
+            this.InvertedIndexButton.Click += new System.EventHandler(this.InvertedIndexButton_Click);
+            // 
+            // SoundexButton
+            // 
+            this.SoundexButton.Location = new System.Drawing.Point(12, 99);
+            this.SoundexButton.Name = "SoundexButton";
+            this.SoundexButton.Size = new System.Drawing.Size(148, 55);
+            this.SoundexButton.TabIndex = 1;
+            this.SoundexButton.Text = "Soundex";
+            this.SoundexButton.UseVisualStyleBackColor = true;
+            this.SoundexButton.Click += new System.EventHandler(this.SoundexButton_Click);
             // 
             // Form2
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Controls.Add(this.button1);
+            this.Controls.Add(this.SoundexButton);
+            this.Controls.Add(this.InvertedIndexButton);
             this.Name = "Form2";
             this.Text = "Form2";
             this.ResumeLayout(false);
@@ -55,6 +68,7 @@
 
         #endregion
 
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button InvertedIndexButton;
+        private System.Windows.Forms.Button SoundexButton;
     }
 }

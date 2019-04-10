@@ -18,7 +18,7 @@ namespace IR_milestone
             InitializeComponent();
         }
         static string connectionString = "Data Source=ABANOUB\\SQLEXPRESS;Initial Catalog=College;Integrated Security=True";
-        private void button1_Click(object sender, EventArgs e)
+        private void InvertedIndexButton_Click(object sender, EventArgs e)
         {
             //Fetch 1500 document from DB
             Module2 module2 = new Module2();
@@ -88,6 +88,55 @@ namespace IR_milestone
             }
             connection.Close();
 
+        }
+
+        private void SoundexButton_Click(object sender, EventArgs e)
+        {
+            Module2 module2 = new Module2();
+            Dictionary<string, List<string>> SoundexIndex = new Dictionary<string, List<string>>();
+            SqlConnection connection = new SqlConnection(connectionString);
+            string command = "SELECT Term FROM Dictionary;";
+            SqlCommand cmd = new SqlCommand(command, connection);
+            connection.Open();
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    string so = module2.Soundex(reader.GetString(0));
+                    if(SoundexIndex.ContainsKey(so))
+                    {
+                        SoundexIndex[so].Add(reader.GetString(0));
+                    }
+                    else
+                    {
+                        SoundexIndex.Add(so, new List<string>());
+                        SoundexIndex[so].Add(reader.GetString(0));
+                    }
+                }
+            }
+            Dictionary<string, string> SoundexIndex2 = new Dictionary<string, string>();
+            foreach (var x in SoundexIndex)
+            {
+                string temp = "";
+                foreach(var y in x.Value)
+                {
+                    temp += y + ",";
+                }
+                SoundexIndex2.Add(x.Key, temp);
+            }
+            string insertStr = "insert into Soundex (Soundex,Term)values(@par1,@par2)";
+            foreach(var x in SoundexIndex2)
+            {
+                SqlCommand cmd2 = new SqlCommand(insertStr, connection);
+                SqlParameter par1 = new SqlParameter("@par1", x.Key);
+                SqlParameter par2 = new SqlParameter("@par2", x.Value);
+                cmd2.Parameters.Add(par1);
+                cmd2.Parameters.Add(par2);
+                cmd2.ExecuteNonQuery();
+            }
+
+            connection.Close();
+            MessageBox.Show("done");
         }
     }
 }
