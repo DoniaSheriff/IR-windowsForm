@@ -51,7 +51,7 @@ namespace IR_milestone
             Queue<string> templinks = new Queue<string>();
             templinks.Enqueue(seed);
             int counter = 0;
-            while(templinks.Count!=0 && counter<2000)
+            while(templinks.Count!=0 && counter<2200)
             {
                 try
                 {
@@ -92,7 +92,7 @@ namespace IR_milestone
                             continue;
                         else if (link.StartsWith("http"))
                         {
-                            //if (!(links.Contains(link)))
+                            if (!(links.Contains(link)))
                             {
                                 try {
                                     insert(link, document);
