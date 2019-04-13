@@ -98,11 +98,14 @@ namespace IR_milestone
             string command = "SELECT Term FROM Dictionary;";
             SqlCommand cmd = new SqlCommand(command, connection);
             connection.Open();
+            //Fetches all Terms from InvertedIndex (Dictionary)
             using (SqlDataReader reader = cmd.ExecuteReader())
             {
                 while (reader.Read())
                 {
+                    //Gets the soundex of the term using the module2.soundex function
                     string so = module2.Soundex(reader.GetString(0));
+                    //Adds the soundex to SoundexIndex if it deoesn't exist, if It exists Adds the term to the list of terms that matches the soundex
                     if(SoundexIndex.ContainsKey(so))
                     {
                         SoundexIndex[so].Add(reader.GetString(0));
@@ -137,6 +140,84 @@ namespace IR_milestone
 
             connection.Close();
             MessageBox.Show("done");
+        }
+
+        private void Bigram_Click(object sender, EventArgs e)
+        {
+            HashSet<string> BigramIndex = new HashSet<string>();
+            Dictionary<string, string> BigramTable = new Dictionary<string, string>();
+            SqlConnection connection = new SqlConnection(connectionString);
+            string command = "SELECT Term FROM Dictionary;";
+            SqlCommand cmd = new SqlCommand(command, connection);
+            connection.Open();
+            string temp="",bigram;
+            //Gets all Terms from InvertedIndex table(Dictionary), 
+            //Splits each term into bigrams adding $ before and after the term, 
+            //Adds to HashSet so all bigrams are unique
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    temp = "";
+                    temp += "$"+reader.GetString(0)+"$";
+                    for(int i=0; i<temp.Length-1;i++)
+                    {
+                        bigram = "";                        
+                        bigram += temp[i];
+                        bigram += temp[i+1];
+                        if (!BigramIndex.Contains(bigram))
+                        {
+                            BigramIndex.Add(bigram);
+                        }
+
+                    }
+                }
+            }
+            //Takes each bigram and Queries the DB using a 'Like' statment to get all Terms that match the bigram
+            //Adds to BigramTable dictionary<Bigram,Listofterms that match>
+            foreach(var b in BigramIndex)
+            {
+                string Temp = "";
+                if(b[0]=='$')
+                {
+                    Temp += b[1];
+                    Temp += "%";
+                }
+                else if(b[1] == '$')
+                {
+                    Temp += "%";
+                    Temp += b[0];
+                }
+                else
+                {
+                    Temp += "%";
+                    Temp += b[0];
+                    Temp += b[1];
+                    Temp += "%";
+                }
+                command = "select Term from Dictionary where Term Like '"+Temp+"'";
+                SqlCommand cmd2 = new SqlCommand(command, connection);
+                string ListOfTerms = "";
+                using (SqlDataReader reader = cmd2.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        ListOfTerms+=reader.GetString(0)+",";
+                    }
+                }
+                BigramTable.Add(b, ListOfTerms);
+            }
+            //Inserts into BigramTable in DB
+            foreach(var b in BigramTable)
+            {
+                command = "insert into Bigram (Bigram,Terms)values(@par1,@par2)";
+                SqlCommand cmd3 = new SqlCommand(command, connection);
+                cmd3.Parameters.AddWithValue("@par1", b.Key);
+                cmd3.Parameters.AddWithValue("@par2", b.Value);
+                cmd3.ExecuteNonQuery();
+            }
+            connection.Close();
+            MessageBox.Show("Done");
         }
     }
 }

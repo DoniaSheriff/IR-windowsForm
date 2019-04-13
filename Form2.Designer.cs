@@ -30,6 +30,7 @@
         {
             this.InvertedIndexButton = new System.Windows.Forms.Button();
             this.SoundexButton = new System.Windows.Forms.Button();
+            this.Bigram = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // InvertedIndexButton
@@ -45,6 +46,7 @@
             // 
             // SoundexButton
             // 
+            this.SoundexButton.Enabled = false;
             this.SoundexButton.Location = new System.Drawing.Point(12, 99);
             this.SoundexButton.Name = "SoundexButton";
             this.SoundexButton.Size = new System.Drawing.Size(148, 55);
@@ -53,11 +55,22 @@
             this.SoundexButton.UseVisualStyleBackColor = true;
             this.SoundexButton.Click += new System.EventHandler(this.SoundexButton_Click);
             // 
+            // Bigram
+            // 
+            this.Bigram.Location = new System.Drawing.Point(12, 192);
+            this.Bigram.Name = "Bigram";
+            this.Bigram.Size = new System.Drawing.Size(148, 53);
+            this.Bigram.TabIndex = 2;
+            this.Bigram.Text = "Bigram";
+            this.Bigram.UseVisualStyleBackColor = true;
+            this.Bigram.Click += new System.EventHandler(this.Bigram_Click);
+            // 
             // Form2
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.Bigram);
             this.Controls.Add(this.SoundexButton);
             this.Controls.Add(this.InvertedIndexButton);
             this.Name = "Form2";
@@ -70,5 +83,6 @@
 
         private System.Windows.Forms.Button InvertedIndexButton;
         private System.Windows.Forms.Button SoundexButton;
+        private System.Windows.Forms.Button Bigram;
     }
 }
