@@ -17,7 +17,7 @@ namespace IR_milestone
         {
             InitializeComponent();
         }
-        static string connectionString = "Data Source=ABANOUB\\SQLEXPRESS;Initial Catalog=College;Integrated Security=True";
+        static string connectionString = "Data Source=DONIA\\SQLEXPRESS;Initial Catalog=College;Integrated Security=True";
         private void InvertedIndexButton_Click(object sender, EventArgs e)
         {
             //Fetch 1500 document from DB
@@ -35,6 +35,7 @@ namespace IR_milestone
             }
             connection.Close();
             SaveInvertedIndex(module2.InvertedIndex);
+           
             MessageBox.Show("Done");
         }
 
@@ -94,6 +95,7 @@ namespace IR_milestone
         {
             Module2 module2 = new Module2();
             Dictionary<string, List<string>> SoundexIndex = new Dictionary<string, List<string>>();
+
             SqlConnection connection = new SqlConnection(connectionString);
             string command = "SELECT Term FROM Dictionary;";
             SqlCommand cmd = new SqlCommand(command, connection);
@@ -219,5 +221,18 @@ namespace IR_milestone
             connection.Close();
             MessageBox.Show("Done");
         }
+
+        private void Form2_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            Module2 module2 = new Module2();
+            module2.spellcheckModule();
+            MessageBox.Show("Done");
+        }
     }
 }
+;

@@ -5,14 +5,18 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Data;
+using System.Data.SqlClient;
 namespace IR_milestone
 {
     class Module2
     {
+        static string connectionString = "Data Source=DONIA\\SQLEXPRESS;Initial Catalog=College;Integrated Security=True";
+
         //Term, List of DocumentIds
-        public Dictionary<string, List<int>> SpellCheckIndex = new Dictionary<string, List<int>>();
+       static public Dictionary<string, List<int>> SpellCheckIndex = new Dictionary<string, List<int>>();
         //Term, Dictionary<DocumentId, List of positions>
-        public Dictionary<string, Dictionary<int,List<int>>> InvertedIndex = new Dictionary<string, Dictionary<int,List<int>>>();
+        public Dictionary<string, Dictionary<int, List<int>>> InvertedIndex = new Dictionary<string, Dictionary<int, List<int>>>();
         static Dictionary<string, bool> StopWords = new Dictionary<string, bool>
     {
         { "a", true },
@@ -333,18 +337,18 @@ namespace IR_milestone
         { "yourselves", true }
     };
         public void Indexing(string Text, int docID)
-        {        
+        {
             //Remove Punctuation and numbers
             string result = Regex.Replace(Text, "[^a-zA-Z\\s]", "");
             result = Regex.Replace(result, @"(?<!^)(?=[A-Z])", " ");
 
             //Split by delimiters to get Tokens
-            char[] delimiters = new char[] { '\r', '\n',' '};
-            string[] tokens = result.Split(delimiters, StringSplitOptions.RemoveEmptyEntries).Where(x=>x.Length>1).ToArray();
+            char[] delimiters = new char[] { '\r', '\n', ' ' };
+            string[] tokens = result.Split(delimiters, StringSplitOptions.RemoveEmptyEntries).Where(x => x.Length > 1).ToArray();
 
             //Save position of each token before removing stop words
             List<Tuple<string, int>> Tokens = new List<Tuple<string, int>>();
-            for(int i=0; i<tokens.Length;i++)
+            for (int i = 0; i < tokens.Length; i++)
             {
                 Tokens.Add(new Tuple<string, int>(tokens[i].ToLower(), i));
             }
@@ -357,21 +361,25 @@ namespace IR_milestone
                     Tokens_Stop.Add(x);
             }
             //Note: before stemming the terms, just save a copy of them (term, doc_id) to be used later on in the spell check module
-            foreach(var x in Tokens_Stop)
+
+            //Tokens_Stop contains : Term , Position after remmoving Stopwords
+            foreach (var x in Tokens_Stop)
             {
                 if (SpellCheckIndex.ContainsKey(x.Item1))
                 {
-                    if(!SpellCheckIndex[x.Item1].Contains(docID))
+                    if (!SpellCheckIndex[x.Item1].Contains(docID))
                     {
                         SpellCheckIndex[x.Item1].Add(docID);
                     }
                 }
                 else
                 {
-                    SpellCheckIndex.Add(x.Item1,new List<int>());
+                    SpellCheckIndex.Add(x.Item1, new List<int>());
                     SpellCheckIndex[x.Item1].Add(docID);
                 }
             }
+
+            
 
             //Stemming using StemmersNet snowballs port
             List<Tuple<string, int>> Tokens_Stem = new List<Tuple<string, int>>();
@@ -383,9 +391,9 @@ namespace IR_milestone
             }
 
             //Create Inverted Index
-            foreach(var x in Tokens_Stem)
+            foreach (var x in Tokens_Stem)
             {
-                if(InvertedIndex.ContainsKey(x.Item1))
+                if (InvertedIndex.ContainsKey(x.Item1))
                 {
                     if (InvertedIndex[x.Item1].ContainsKey(docID))
                     {
@@ -403,12 +411,13 @@ namespace IR_milestone
                     InvertedIndex.Add(x.Item1, new Dictionary<int, List<int>>());
                     List<int> temp = new List<int>();
                     temp.Add(x.Item2);
-                    InvertedIndex[x.Item1].Add(docID,temp);
+                    InvertedIndex[x.Item1].Add(docID, temp);
                 }
             }
         }
         public string Soundex(string word)
         {
+            //QUESTION
             const string soundexAlphabet = "0123012#02245501262301#202";
             string soundexString = "";
             char lastSoundexChar = '?';
@@ -434,5 +443,36 @@ namespace IR_milestone
 
             return soundexString.PadRight(4, '0');
         }
+
+
+        public void spellcheckModule()
+        {
+            SqlConnection connection = new SqlConnection(connectionString);
+            connection.Open();
+            foreach (var b in SpellCheckIndex)
+            {
+                try
+                {
+                    string insertStr = "insert into SpellcheckModule (Term,DocID)values(@par1,@par2)";
+                    SqlCommand cmd = new SqlCommand(insertStr, connection);
+
+                    string positions = "";
+                    foreach (var pos in b.Value)
+                    {
+                        positions += pos.ToString() + ",";
+                    }
+                    SqlParameter par1 = new SqlParameter("@par1", b.Key);
+                    SqlParameter par2 = new SqlParameter("@par2", positions);
+                    cmd.Parameters.Add(par1);
+                    cmd.Parameters.Add(par2);
+
+                    cmd.ExecuteNonQuery();
+                }
+
+                catch
+                { }
+            }
+        }
     }
+
 }
