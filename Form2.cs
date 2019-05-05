@@ -97,7 +97,7 @@ namespace IR_milestone
             Dictionary<string, List<string>> SoundexIndex = new Dictionary<string, List<string>>();
 
             SqlConnection connection = new SqlConnection(connectionString);
-            string command = "SELECT Term FROM Dictionary;";
+            string command = "SELECT Term FROM SpellcheckModule;";
             SqlCommand cmd = new SqlCommand(command, connection);
             connection.Open();
             //Fetches all Terms from InvertedIndex (Dictionary)
@@ -149,7 +149,7 @@ namespace IR_milestone
             HashSet<string> BigramIndex = new HashSet<string>();
             Dictionary<string, string> BigramTable = new Dictionary<string, string>();
             SqlConnection connection = new SqlConnection(connectionString);
-            string command = "SELECT Term FROM Dictionary;";
+            string command = "SELECT Term FROM SpellcheckModule;";
             SqlCommand cmd = new SqlCommand(command, connection);
             connection.Open();
             string temp="",bigram;
@@ -225,14 +225,7 @@ namespace IR_milestone
         private void Form2_Load(object sender, EventArgs e)
         {
 
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            Module2 module2 = new Module2();
-            module2.spellcheckModule();
-            MessageBox.Show("Done");
-        }
+        }        
     }
 }
 ;

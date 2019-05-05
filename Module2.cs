@@ -378,7 +378,7 @@ namespace IR_milestone
                     SpellCheckIndex[x.Item1].Add(docID);
                 }
             }
-
+            spellcheckModule();
             
 
             //Stemming using StemmersNet snowballs port

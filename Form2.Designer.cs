@@ -31,15 +31,14 @@
             this.InvertedIndexButton = new System.Windows.Forms.Button();
             this.SoundexButton = new System.Windows.Forms.Button();
             this.Bigram = new System.Windows.Forms.Button();
-            this.SpellCheckModule = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // InvertedIndexButton
             // 
-            this.InvertedIndexButton.Location = new System.Drawing.Point(30, 11);
-            this.InvertedIndexButton.Margin = new System.Windows.Forms.Padding(2);
+            this.InvertedIndexButton.Location = new System.Drawing.Point(40, 14);
+            this.InvertedIndexButton.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.InvertedIndexButton.Name = "InvertedIndexButton";
-            this.InvertedIndexButton.Size = new System.Drawing.Size(119, 46);
+            this.InvertedIndexButton.Size = new System.Drawing.Size(159, 57);
             this.InvertedIndexButton.TabIndex = 0;
             this.InvertedIndexButton.Text = "InvertedIndex";
             this.InvertedIndexButton.UseVisualStyleBackColor = true;
@@ -47,10 +46,10 @@
             // 
             // SoundexButton
             // 
-            this.SoundexButton.Location = new System.Drawing.Point(30, 137);
-            this.SoundexButton.Margin = new System.Windows.Forms.Padding(2);
+            this.SoundexButton.Location = new System.Drawing.Point(40, 169);
+            this.SoundexButton.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.SoundexButton.Name = "SoundexButton";
-            this.SoundexButton.Size = new System.Drawing.Size(119, 45);
+            this.SoundexButton.Size = new System.Drawing.Size(159, 55);
             this.SoundexButton.TabIndex = 1;
             this.SoundexButton.Text = "Soundex";
             this.SoundexButton.UseVisualStyleBackColor = true;
@@ -58,35 +57,24 @@
             // 
             // Bigram
             // 
-            this.Bigram.Location = new System.Drawing.Point(30, 198);
-            this.Bigram.Margin = new System.Windows.Forms.Padding(2);
+            this.Bigram.Location = new System.Drawing.Point(40, 244);
+            this.Bigram.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.Bigram.Name = "Bigram";
-            this.Bigram.Size = new System.Drawing.Size(119, 43);
+            this.Bigram.Size = new System.Drawing.Size(159, 53);
             this.Bigram.TabIndex = 2;
             this.Bigram.Text = "Bigram";
             this.Bigram.UseVisualStyleBackColor = true;
             this.Bigram.Click += new System.EventHandler(this.Bigram_Click);
             // 
-            // SpellCheckModule
-            // 
-            this.SpellCheckModule.Location = new System.Drawing.Point(30, 75);
-            this.SpellCheckModule.Name = "SpellCheckModule";
-            this.SpellCheckModule.Size = new System.Drawing.Size(119, 44);
-            this.SpellCheckModule.TabIndex = 3;
-            this.SpellCheckModule.Text = "Spell Check";
-            this.SpellCheckModule.UseVisualStyleBackColor = true;
-            this.SpellCheckModule.Click += new System.EventHandler(this.button1_Click);
-            // 
             // Form2
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(181, 259);
-            this.Controls.Add(this.SpellCheckModule);
+            this.ClientSize = new System.Drawing.Size(241, 319);
             this.Controls.Add(this.Bigram);
             this.Controls.Add(this.SoundexButton);
             this.Controls.Add(this.InvertedIndexButton);
-            this.Margin = new System.Windows.Forms.Padding(2);
+            this.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.Name = "Form2";
             this.Text = "Form2";
             this.ResumeLayout(false);
@@ -98,6 +86,5 @@
         private System.Windows.Forms.Button InvertedIndexButton;
         private System.Windows.Forms.Button SoundexButton;
         private System.Windows.Forms.Button Bigram;
-        private System.Windows.Forms.Button SpellCheckModule;
     }
 }
