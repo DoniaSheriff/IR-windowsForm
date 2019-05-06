@@ -34,8 +34,9 @@ namespace IR_milestone
                 }
             }
             connection.Close();
+
             SaveInvertedIndex(module2.InvertedIndex);
-           
+            module2.spellcheckModule();
             MessageBox.Show("Done");
         }
 
