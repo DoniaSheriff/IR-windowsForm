@@ -335,13 +335,10 @@ namespace IR_milestone
 		public Dictionary<int, List<int>> listPositionsA = new Dictionary<int, List<int>>();
 		public string[] StemWords(string query)
 		{
-			//Remove Punctuation and numbers
-			string result = Regex.Replace(query, "[^a-zA-Z\\s]", "");
-			result = Regex.Replace(result, @"(?<!^)(?=[A-Z])", " ");
-
+		
 			//Split by delimiters to get Tokens
-			char[] delimiters = new char[] { '\r', '\n', ' ' };
-			string[] words = result.Split(delimiters, StringSplitOptions.RemoveEmptyEntries).Where(x => x.Length > 1).ToArray();
+			char[] delimiters = new char[] { '\r', '\n', ' ',',' };
+			string[] words = query.Split(delimiters, StringSplitOptions.RemoveEmptyEntries).ToArray();
 			string[] words_Stop =new string[10000];
 			for (int i = 0; i < 10000; i++)
 				words_Stop[i] = "";
@@ -374,12 +371,12 @@ namespace IR_milestone
 			//from(select d.Term, p.ID, p.TermID, p.DocNum, p.Freq, p.Position from[Dictionary] d,[Posting] p where d.ID = p.TermID and d.Term = 'search')a , 
 			// (select d.Term , p.ID ,p.TermID,p.DocNum,p.Freq,p.Position from[Dictionary] d ,[Posting] p where d.ID = p.TermID and d.Term='music') b
 			//where a.DocNum=b.DocNum
-			
+
 			foreach (var b in wordsList)
 			{
-				
-		   
-			//    List<> positionA = new List;
+
+
+				//    List<> positionA = new List;
 				SqlConnection connection = new SqlConnection(connectionString);
 				string command = "select a.DocNum, a.Position AS A , b.Position AS B from(select d.Term, p.ID, p.TermID, p.DocNum, p.Freq, p.Position from[Dictionary] d,[Posting] p where d.ID = p.TermID and d.Term = 'search')a ,(select d.Term , p.ID ,p.TermID,p.DocNum,p.Freq,p.Position from[Dictionary] d ,[Posting] p where d.ID = p.TermID and d.Term='music') b where a.DocNum=b.DocNum";
 				SqlCommand cmd = new SqlCommand(command, connection);
@@ -405,23 +402,72 @@ namespace IR_milestone
 						TempPositionBString = TempPositionB.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 
 						for (int i = 0; i < TempPositionAString.Length; i++)
-						{ 
-							PositionAList.Add(Int32.Parse(TempPositionAString[i]));
-							PositionBList.Add(Int32.Parse(TempPositionBString[i]));
+						{
+							try
+							{
+								PositionAList.Add(Int32.Parse(TempPositionAString[i]));
+								PositionBList.Add(Int32.Parse(TempPositionBString[i]));
+							}
+							catch
+							{ }
 						}
+						
+						//Now you have list for each  word -- complete here 
 
 
-					  
+
 
 
 					}
-					int z=2;
+					int z = 2;
 				}
 			}
 
 
 
 		}
+		public void SoundexSearch(string[] words)
+		{
+			foreach (var b in words)
+			{
+				Module2 module2 = new Module2();
+				string hashcode = module2.Soundex(b);
+				SqlConnection connection = new SqlConnection(connectionString);
+				string command = "SELECT Term FROM Soundex where Soundex =@param1";
+				SqlCommand cmd = new SqlCommand(command, connection);
+				connection.Open();
+				SqlParameter par1 = new SqlParameter("@param1", hashcode);
+				cmd.Parameters.Add(par1);
+				string soundexTerms = "";
+				using (SqlDataReader reader = cmd.ExecuteReader())
+				{
+					while (reader.Read())
+					{
+						soundexTerms = reader["Term"].ToString();
+					}
+				}
+				connection.Close();
+				string[] soundexTerm_Stem = StemWords(soundexTerms);
+				foreach (var x in soundexTerm_Stem )
+				{
+					 command = @"SELECT c.ID,c.URL  
+						FROM   [College].[dbo].[Dictionary] d,[College].[dbo].[Posting] p  ,
+							   [College].[dbo].[Documents] c
+						where d.Term = @param1 and d.ID = p.TermID and p.DocNum = c.ID";
+					 cmd = new SqlCommand(command, connection);
+					connection.Open();
+					SqlParameter par2 = new SqlParameter("@param1", hashcode);
+					cmd.Parameters.Add(par2);
+
+
+				}
+			}
+		
+		}
+		public void SpellCheck(string[] words)
+		{ }
+
+
 
 	}
 }
