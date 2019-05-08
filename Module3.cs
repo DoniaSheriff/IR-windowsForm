@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Data;
 using System.Data.SqlClient;
-using System.Text.RegularExpressions;
 using Iveonik.Stemmers;
 namespace IR_milestone
 {
@@ -331,20 +327,20 @@ namespace IR_milestone
 		{ "yourself", true },
 		{ "yourselves", true }
 	};
+		char[] delimiters = new char[] { '\r', '\n', ' ', ',' };
+		static HashSet<string> JackOutput = new HashSet<string>();
 
-		public Dictionary<int, List<int>> listPositionsA = new Dictionary<int, List<int>>();
 		public string[] StemWords(string query)
 		{
-		
+
 			//Split by delimiters to get Tokens
-			char[] delimiters = new char[] { '\r', '\n', ' ',',' };
 			string[] words = query.Split(delimiters, StringSplitOptions.RemoveEmptyEntries).ToArray();
-			string[] words_Stop =new string[10000];
+			string[] words_Stop = new string[10000];
 			for (int i = 0; i < 10000; i++)
 				words_Stop[i] = "";
 			//Remove StopWords
 			int counter = 0;
-			for (int i =0; i<words.Length;i++)
+			for (int i = 0; i < words.Length; i++)
 			{
 				if (!StopWords.ContainsKey(words[i]))
 					words_Stop[i] = words[i];
@@ -352,14 +348,14 @@ namespace IR_milestone
 			}
 
 			//Stemming using StemmersNet snowballs port
-			string[] Tokens_Stem =new string[counter];
+			string[] Tokens_Stem = new string[counter];
 			for (int i = 0; i < counter; i++)
 				Tokens_Stem[i] = "";
 			IStemmer stemmer = new EnglishStemmer();
-			for (int i = 0; i < counter; i++) 
+			for (int i = 0; i < counter; i++)
 			{
-				var StemmedWord = new[] { stemmer.Stem(words_Stop[i])};
-				Tokens_Stem[i]=(StemmedWord[0]);
+				var StemmedWord = new[] { stemmer.Stem(words_Stop[i]) };
+				Tokens_Stem[i] = (StemmedWord[0]);
 			}
 			return Tokens_Stem;
 		}
@@ -411,7 +407,7 @@ namespace IR_milestone
 							catch
 							{ }
 						}
-						
+
 						//Now you have list for each  word -- complete here 
 
 
@@ -428,11 +424,13 @@ namespace IR_milestone
 		}
 		public void SoundexSearch(string[] words)
 		{
+			SqlConnection connection = new SqlConnection(connectionString);
+
 			foreach (var b in words)
 			{
 				Module2 module2 = new Module2();
 				string hashcode = module2.Soundex(b);
-				SqlConnection connection = new SqlConnection(connectionString);
+
 				string command = "SELECT Term FROM Soundex where Soundex =@param1";
 				SqlCommand cmd = new SqlCommand(command, connection);
 				connection.Open();
@@ -448,26 +446,134 @@ namespace IR_milestone
 				}
 				connection.Close();
 				string[] soundexTerm_Stem = StemWords(soundexTerms);
-				foreach (var x in soundexTerm_Stem )
+				foreach (var x in soundexTerm_Stem)
 				{
-					 command = @"SELECT c.ID,c.URL  
+					command = @"SELECT c.ID,c.URL  
 						FROM   [College].[dbo].[Dictionary] d,[College].[dbo].[Posting] p  ,
 							   [College].[dbo].[Documents] c
 						where d.Term = @param1 and d.ID = p.TermID and p.DocNum = c.ID";
-					 cmd = new SqlCommand(command, connection);
+					cmd = new SqlCommand(command, connection);
 					connection.Open();
 					SqlParameter par2 = new SqlParameter("@param1", hashcode);
 					cmd.Parameters.Add(par2);
 
 
 				}
+
 			}
-		
+
 		}
 		public void SpellCheck(string[] words)
-		{ }
+		{
+			SqlConnection connection = new SqlConnection(connectionString);
+			HashSet<string> BigramIndex = new HashSet<string>();
+			 HashSet<string> BigramValues = new HashSet<string>();
+			 
+			//Hanakhud kol kelma mn l query negblha l bigram beta3ha
+			//Gets all Terms from InvertedIndex table(Dictionary), 
+			//Splits each term into bigrams adding $ before and after the term, 
+			//Adds to HashSet so all bigrams are unique
+			foreach (var QueryWord in words)
+			{
+				BigramIndex = buildBigram(QueryWord);
+				
+				//W b3den hanru7 na5ud kol el kalemat elly bttl3 mn lbigrams da
+				foreach (var x in BigramIndex)
+				{
+					BigramValues = retrieveBigram(BigramValues, x);
+				}
+				//W ne7sb lkol kelma mn el query m3 elklemat ely tel3et mn l sql l jacquard coefficient
+				//BigramValues for the QuerWord Bigram
+				JackQuardCoeff(QueryWord, BigramIndex, BigramValues);
+				foreach (var a in JackOutput)
+				{
+					//W el a2l jacquard mn 0.45 aw equa byt7sblu el edit distance ben el kelma mn l jacquard w el query w ha sort bl a2l distance
+					Levenshtein.Compute(QueryWord, a);
+				}
+			}
+		
+
+		}
+		//bigram of the first word in the query = BigramValues
+		public void JackQuardCoeff(string Query, HashSet<string> BigramIndex, HashSet<string> BigramValues)
+		{
+			HashSet<string> BigramIndex2 = new HashSet<string>();
+			HashSet<string> bigramDictionary = new HashSet<string>();
+			int commonCount = 0, query = BigramIndex.Count, dictionary = 0;
+			double result =0;
+			//x=earth
+			foreach (var x in BigramValues)
+			{
+
+				bigramDictionary = buildBigram(x);				 
+				dictionary = bigramDictionary.Count;
+				HashSet<string> common = new HashSet<string>(BigramIndex);
+				common.IntersectWith(bigramDictionary);
+				commonCount = common.Count;
+				result = (2 * commonCount);
+				result/=(dictionary + query);
+				if (result >= 0.45)
+					JackOutput.Add(x);
+			}
+		}
+		public HashSet<string> buildBigram(string QueryWord)
+		{
+			HashSet<string> BigramIndex = new HashSet<string>();
+			string temp = "", bigram;
+			//Gets all Terms from InvertedIndex table(Dictionary), 
+			//Splits each term into bigrams adding $ before and after the term, 
+			//Adds to HashSet so all bigrams are unique
+			temp = "";
+			temp += "$" + QueryWord + "$";
+			for (int i = 0; i < temp.Length - 1; i++)
+			{
+				bigram = "";
+				bigram += temp[i];
+				bigram += temp[i + 1];
+				//mest5dmen hashset 3shan mafehush duplicates
+				if (!BigramIndex.Contains(bigram))
+				{
+					BigramIndex.Add(bigram);
+				}
+
+			}
+
+			return BigramIndex;
+
+		}
+		public HashSet<string> retrieveBigram(HashSet<string> BigramValues,string x)
+		{
+			//HashSet<string> BigramValues = new HashSet<string>();
+
+			SqlConnection connection = new SqlConnection(connectionString);
+			string command = "SELECT Terms FROM Bigram  where [Bigram] =@param1 ";
+			SqlCommand cmd = new SqlCommand(command, connection);
+			connection.Open();
+			SqlParameter par1 = new SqlParameter("@param1", x);
+			cmd.Parameters.Add(par1);
+			string temp = "";
+			using (SqlDataReader reader = cmd.ExecuteReader())
+			{
+				while (reader.Read())
+				{
+					temp = reader.GetString(0);
+					string[] tempA = temp.Split(delimiters, StringSplitOptions.RemoveEmptyEntries).ToArray();
+					foreach (var z in tempA)
+					{
+						if (!BigramValues.Contains(z))
+						{
+							BigramValues.Add(z);
+						}
+						temp = "";
+					}
+				}
+			}
 
 
 
+			return BigramValues;
+
+
+		}
 	}
 }
