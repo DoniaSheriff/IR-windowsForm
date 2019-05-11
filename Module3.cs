@@ -366,6 +366,7 @@ namespace IR_milestone
             string Query = Regex.Replace(query, "[^a-zA-Z\\s]", "");
             Query = Regex.Replace(Query, @"(?<!^)(?=[A-Z])", " ");
             string[] Tokens = StemWords(Query);
+            //saves the URL of the document and a List of List, List of words of positions
             Dictionary<string, List<List<int>>> Positions = new Dictionary<string, List<List<int>>>();
             SqlConnection connection = new SqlConnection(connectionString);
             string command = @"Select d.ID, p.DocNum, p.Position, c.URL  
@@ -381,6 +382,10 @@ namespace IR_milestone
                 {
                     while (reader.Read())
                     {
+                        //b3ml save lel URL we ba5od string el positions a3mlo split b3d kda b3ml ll list add gowa el list 
+                        //fa kda masln 3andy Query search music, gbt el URLs el fiha Search we 7atetha fl dictionary
+                        //b3d kda el fiha music we 7atetha fl dictionary we bma en el Key unique fa kda hayb2a 3andy
+                        //URL bbc, list[0] positions bta3t search, list[1] positions bta3t music
                         string docURL = reader.GetString(3);
                         string pos = reader.GetString(2);
                         char[] delimiters = new char[] { '\r', '\n', ' ', ',' };
@@ -402,10 +407,15 @@ namespace IR_milestone
                 }
                 connection.Close();
             }
-
+            //da hena el distance fl key we el list of urls 3shan a3ml sort bl min distance
             SortedDictionary<int, List<string>> Results = new SortedDictionary<int, List<string>>();
             foreach (var ID in Positions)
             {
+                //bamshy 3ala kol URL gbto, bagib el min distance maben el kelma of i and of i+1
+                //we b3d kda b3ml add lel distances kolaha we a3mlha save fl result as a key we add el URL lel list of strings bta3t el distance dih
+                //ya3ny masln law 3andy search music pop rap, distance maben search we music 5, maben music we pop 10, maben pop we rap 5
+                //kda el distance bta3t el URL dih 20 we law mafish gher kelma wa7da bas fl query fa tabi3y el distance hatb2a be zero
+                //ana 3amlha maxValue 3shan law zero hatb2a sorted fl awel we7na 3ayznha fl a5r msh fl awel
                 List<int> distances = new List<int>();
                 distances.Add(0);
                 for (int i = 0; i < ID.Value.Count - 1; i++)
