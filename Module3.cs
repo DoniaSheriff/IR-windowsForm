@@ -7,7 +7,7 @@ namespace IR_milestone
 {
 	class Module3
 	{
-		string connectionString = "Data Source=DONIA\\SQLEXPRESS;Initial Catalog=College;Integrated Security=True";
+		string connectionString = "Data Source=ABANOUB\\SQLEXPRESS;Initial Catalog=College;Integrated Security=True";
 		static Dictionary<string, bool> StopWords = new Dictionary<string, bool>
 	{
 		{ "a", true },
@@ -422,10 +422,10 @@ namespace IR_milestone
 
 
 		}
-		public void SoundexSearch(string[] words)
+		public Dictionary<string, List<Tuple<string, int>>> SoundexSearch(string[] words)
 		{
 			SqlConnection connection = new SqlConnection(connectionString);
-
+            Dictionary<string, List<Tuple<string, int>>> Results = new Dictionary<string, List<Tuple<string, int>>>();
 			foreach (var b in words)
 			{
 				Module2 module2 = new Module2();
@@ -441,34 +441,40 @@ namespace IR_milestone
 				{
 					while (reader.Read())
 					{
-						soundexTerms = reader["Term"].ToString();
+                        soundexTerms = reader.GetString(0);
 					}
 				}
-				connection.Close();
 				string[] soundexTerm_Stem = StemWords(soundexTerms);
 				foreach (var x in soundexTerm_Stem)
 				{
-					command = @"SELECT c.ID,c.URL  
-						FROM   [College].[dbo].[Dictionary] d,[College].[dbo].[Posting] p  ,
-							   [College].[dbo].[Documents] c
-						where d.Term = @param1 and d.ID = p.TermID and p.DocNum = c.ID";
+					command = @"SELECT c.ID,c.URL,p.Freq  
+						FROM   [Dictionary] d,[Posting] p,[Documents] c
+						Where d.Term = @param1 and d.ID = p.TermID and p.DocNum = c.ID
+                        Order by p.Freq Desc";
 					cmd = new SqlCommand(command, connection);
-					connection.Open();
-					SqlParameter par2 = new SqlParameter("@param1", hashcode);
+					SqlParameter par2 = new SqlParameter("@param1", x);
 					cmd.Parameters.Add(par2);
-
-
-				}
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        List<Tuple<string, int>> temp = new List<Tuple<string, int>>();
+                        while (reader.Read())
+                        {
+                            temp.Add(new Tuple<string, int>(reader.GetString(1),reader.GetInt32(2)));
+                        }
+                        Results.Add(x, temp);
+                    }
+                }
 
 			}
-
+            connection.Close();
+            return Results;
 		}
-		public void SpellCheck(string[] words)
+		public SortedDictionary<int, List<string>> SpellCheck(string[] words)
 		{
 			SqlConnection connection = new SqlConnection(connectionString);
 			HashSet<string> BigramIndex = new HashSet<string>();
 			 HashSet<string> BigramValues = new HashSet<string>();
-			 
+            SortedDictionary<int, List<string>> Results = new SortedDictionary<int, List<string>>();
 			//Hanakhud kol kelma mn l query negblha l bigram beta3ha
 			//Gets all Terms from InvertedIndex table(Dictionary), 
 			//Splits each term into bigrams adding $ before and after the term, 
@@ -488,11 +494,21 @@ namespace IR_milestone
 				foreach (var a in JackOutput)
 				{
 					//W el a2l jacquard mn 0.45 aw equa byt7sblu el edit distance ben el kelma mn l jacquard w el query w ha sort bl a2l distance
-					Levenshtein.Compute(QueryWord, a);
+					int x = Levenshtein.Compute(QueryWord, a);
+                    if(Results.ContainsKey(x))
+                    {
+                        Results[x].Add(a);
+                    }
+                    else
+                    {
+                        List<string> temp = new List<string>();
+                        temp.Add(a);
+                        Results.Add(x, temp);
+                    }
 				}
 			}
-		
 
+            return Results;
 		}
 		//bigram of the first word in the query = BigramValues
 		public void JackQuardCoeff(string Query, HashSet<string> BigramIndex, HashSet<string> BigramValues)

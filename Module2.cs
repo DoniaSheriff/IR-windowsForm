@@ -11,7 +11,7 @@ namespace IR_milestone
 {
     class Module2
     {
-        static string connectionString = "Data Source=DONIA\\SQLEXPRESS;Initial Catalog=College;Integrated Security=True";
+        static string connectionString = "Data Source=ABANOUB\\SQLEXPRESS;Initial Catalog=College;Integrated Security=True";
 
         //Term, List of DocumentIds
        static public Dictionary<string, List<int>> SpellCheckIndex = new Dictionary<string, List<int>>();
@@ -378,8 +378,8 @@ namespace IR_milestone
                     SpellCheckIndex[x.Item1].Add(docID);
                 }
             }
-           
-            
+
+
 
             //Stemming using StemmersNet snowballs port
             List<Tuple<string, int>> Tokens_Stem = new List<Tuple<string, int>>();
@@ -453,7 +453,7 @@ namespace IR_milestone
             {
                 try
                 {
-                    string insertStr = "insert into SpellcheckModule (Term,DocID)values(@par1,@par2)";
+                    string insertStr = "insert into SpellCheckModule (Term,DocID)values(@par1,@par2)";
                     SqlCommand cmd = new SqlCommand(insertStr, connection);
 
                     string positions = "";

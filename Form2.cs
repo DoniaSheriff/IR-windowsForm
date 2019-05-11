@@ -17,7 +17,7 @@ namespace IR_milestone
         {
             InitializeComponent();
         }
-        static string connectionString = "Data Source=DONIA\\SQLEXPRESS;Initial Catalog=College;Integrated Security=True";
+        static string connectionString = "Data Source=ABANOUB\\SQLEXPRESS;Initial Catalog=College;Integrated Security=True";
         private void InvertedIndexButton_Click(object sender, EventArgs e)
         {
             //Fetch 1500 document from DB
@@ -98,7 +98,7 @@ namespace IR_milestone
             Dictionary<string, List<string>> SoundexIndex = new Dictionary<string, List<string>>();
 
             SqlConnection connection = new SqlConnection(connectionString);
-            string command = "SELECT Term FROM SpellcheckModule;";
+            string command = "SELECT Term FROM SpellCheckModule;";
             SqlCommand cmd = new SqlCommand(command, connection);
             connection.Open();
             //Fetches all Terms from InvertedIndex (Dictionary)
@@ -150,7 +150,7 @@ namespace IR_milestone
             HashSet<string> BigramIndex = new HashSet<string>();
             Dictionary<string, string> BigramTable = new Dictionary<string, string>();
             SqlConnection connection = new SqlConnection(connectionString);
-            string command = "SELECT Term FROM SpellcheckModule;";
+            string command = "SELECT Term FROM SpellCheckModule;";
             SqlCommand cmd = new SqlCommand(command, connection);
             connection.Open();
             string temp="",bigram;
