@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Data.SqlClient;
 using Iveonik.Stemmers;
+using System.Text.RegularExpressions;
+
 namespace IR_milestone
 {
 	class Module3
@@ -359,7 +361,87 @@ namespace IR_milestone
 			}
 			return Tokens_Stem;
 		}
-		public void exactSearch(string[] wordsList)
+        public SortedDictionary<int, List<string>> multipleWordSearch(string query)
+        {
+            string Query = Regex.Replace(query, "[^a-zA-Z\\s]", "");
+            Query = Regex.Replace(Query, @"(?<!^)(?=[A-Z])", " ");
+            string[] Tokens = StemWords(Query);
+            Dictionary<string, List<List<int>>> Positions = new Dictionary<string, List<List<int>>>();
+            SqlConnection connection = new SqlConnection(connectionString);
+            string command = @"Select d.ID, p.DocNum, p.Position, c.URL  
+						FROM   [Dictionary] d,[Posting] p,[Documents] c
+						Where d.Term=@parm1 and d.ID = p.TermID and c.ID = p.DocNum";
+            foreach (var x in Tokens)
+            {
+                SqlCommand cmd = new SqlCommand(command, connection);
+                SqlParameter par2 = new SqlParameter("@parm1", x);
+                cmd.Parameters.Add(par2);
+                connection.Open();
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        string docURL = reader.GetString(3);
+                        string pos = reader.GetString(2);
+                        char[] delimiters = new char[] { '\r', '\n', ' ', ',' };
+                        string[] temp = pos.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+                        List<int> positions = new List<int>();
+                        foreach (var p in temp)
+                            positions.Add(Convert.ToInt32(p));
+                        if (Positions.ContainsKey(docURL))
+                        {
+                            Positions[docURL].Add(positions);
+                        }
+                        else
+                        {
+                            List<List<int>> tempp = new List<List<int>>();
+                            tempp.Add(positions);
+                            Positions.Add(docURL, tempp);
+                        }
+                    }
+                }
+                connection.Close();
+            }
+
+            SortedDictionary<int, List<string>> Results = new SortedDictionary<int, List<string>>();
+            foreach (var ID in Positions)
+            {
+                List<int> distances = new List<int>();
+                distances.Add(0);
+                for (int i = 0; i < ID.Value.Count - 1; i++)
+                {
+                    int minDistance = int.MaxValue;
+                    for (int j = 0; j < ID.Value[i].Count; j++)
+                    {
+                        if (ID.Value[i + 1].Count > j && ID.Value[i][j] < ID.Value[i + 1][j])
+                        {
+                            int y = ID.Value[i + 1][j] - ID.Value[i][j];
+                            if (y < minDistance)
+                                minDistance = y;
+                        }
+
+                    }
+                    distances.Add(minDistance);
+                }
+                int Distance = 0;
+                foreach (var x in distances)
+                    Distance += x;
+                if (Distance == 0)
+                    Distance = int.MaxValue;
+                if (Results.ContainsKey(Distance))
+                {
+                    Results[Distance].Add(ID.Key);
+                }
+                else
+                {
+                    List<string> temp = new List<string>();
+                    temp.Add(ID.Key);
+                    Results.Add(Distance, temp);
+                }
+            }
+            return Results;
+        }
+        public void exactSearch(string[] wordsList)
 		{
 			//assume that searchQuery = "search music"
 
@@ -432,6 +514,7 @@ namespace IR_milestone
 				string hashcode = module2.Soundex(b);
 
 				string command = "SELECT Term FROM Soundex where Soundex =@param1";
+
 				SqlCommand cmd = new SqlCommand(command, connection);
 				connection.Open();
 				SqlParameter par1 = new SqlParameter("@param1", hashcode);
