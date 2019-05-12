@@ -420,101 +420,145 @@ namespace IR_milestone
                 distances.Add(0);
                 for (int i = 0; i < ID.Value.Count - 1; i++)
                 {
+
                     int minDistance = int.MaxValue;
                     for (int j = 0; j < ID.Value[i].Count; j++)
                     {
-                        if (ID.Value[i + 1].Count > j && ID.Value[i][j] < ID.Value[i + 1][j])
+                        for (int k = 0; k < ID.Value[i + 1].Count; k++)
                         {
-                            int y = ID.Value[i + 1][j] - ID.Value[i][j];
-                            if (y < minDistance)
-                                minDistance = y;
+                            if (ID.Value[i + 1].Count > j && ID.Value[i][j] < ID.Value[i + 1][k])
+                            {
+                                int y = Math.Abs(ID.Value[i + 1][j] - ID.Value[i][j]);
+                                if (y < minDistance)
+                                    minDistance = y;
+                            }
                         }
-
                     }
                     distances.Add(minDistance);
                 }
                 int Distance = 0;
                 foreach (var x in distances)
                     Distance += x;
-                if (Distance == 0)
+                if (Distance <= 0)
                     Distance = int.MaxValue;
+                //Law 3adad el tokens 3 masln we el document fiha 2 bas fa ba7ot + abl el URL 3shan a3lmha enha uncommon result
+                string URL = ID.Key;
+                if (ID.Value.Count < Tokens.Length)
+                {
+                    URL = "+" + ID.Key;
+                }
                 if (Results.ContainsKey(Distance))
                 {
-                    Results[Distance].Add(ID.Key);
+                    Results[Distance].Add(URL);
                 }
                 else
                 {
                     List<string> temp = new List<string>();
-                    temp.Add(ID.Key);
+                    temp.Add(URL);
                     Results.Add(Distance, temp);
                 }
             }
             return Results;
         }
-        public void exactSearch(string[] wordsList)
-		{
-			//assume that searchQuery = "search music"
+        public SortedDictionary<int, List<string>> ExactSearch(string query)
+        {
+            string Query = Regex.Replace(query, "[^a-zA-Z\\s]", "");
+            Query = Regex.Replace(Query, @"(?<!^)(?=[A-Z])", " ");
+            string[] Tokens = StemWords(Query);
+            //saves the URL of the document and a List of List, List of words of positions
+            Dictionary<string, List<List<int>>> Positions = new Dictionary<string, List<List<int>>>();
+            SqlConnection connection = new SqlConnection(connectionString);
+            string command = @"Select d.ID, p.DocNum, p.Position, c.URL  
+						FROM   [Dictionary] d,[Posting] p,[Documents] c
+						Where d.Term=@parm1 and d.ID = p.TermID and c.ID = p.DocNum";
+            foreach (var x in Tokens)
+            {
+                SqlCommand cmd = new SqlCommand(command, connection);
+                SqlParameter par2 = new SqlParameter("@parm1", x);
+                cmd.Parameters.Add(par2);
+                connection.Open();
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        //b3ml save lel URL we ba5od string el positions a3mlo split b3d kda b3ml ll list add gowa el list 
+                        //fa kda masln 3andy Query search music, gbt el URLs el fiha Search we 7atetha fl dictionary
+                        //b3d kda el fiha music we 7atetha fl dictionary we bma en el Key unique fa kda hayb2a 3andy
+                        //URL bbc, list[0] positions bta3t search, list[1] positions bta3t music
+                        string docURL = reader.GetString(3);
+                        string pos = reader.GetString(2);
+                        char[] delimiters = new char[] { '\r', '\n', ' ', ',' };
+                        string[] temp = pos.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+                        List<int> positions = new List<int>();
+                        foreach (var p in temp)
+                            positions.Add(Convert.ToInt32(p));
+                        if (Positions.ContainsKey(docURL))
+                        {
+                            Positions[docURL].Add(positions);
+                        }
+                        else
+                        {
+                            List<List<int>> tempp = new List<List<int>>();
+                            tempp.Add(positions);
+                            Positions.Add(docURL, tempp);
+                        }
+                    }
+                }
+                connection.Close();
+            }
+            //da hena el distance fl key we el list of urls 3shan a3ml sort bl min distance
+            SortedDictionary<int, List<string>> Results = new SortedDictionary<int, List<string>>(new DescendingComparer<int>());
+            foreach (var ID in Positions)
+            {
+                //bamshy 3ala kol URL gbto, bagib el min distance maben el kelma of i and of i+1
+                //we b3d kda b3ml add lel distances kolaha we a3mlha save fl result as a key we add el URL lel list of strings bta3t el distance dih
+                //ya3ny masln law 3andy search music pop rap, distance maben search we music 5, maben music we pop 10, maben pop we rap 5
+                //kda el distance bta3t el URL dih 20 we law mafish gher kelma wa7da bas fl query fa tabi3y el distance hatb2a be zero
+                //ana 3amlha maxValue 3shan law zero hatb2a sorted fl awel we7na 3ayznha fl a5r msh fl awel
+                int Occurence = 0;
+                for (int i = 0; i < ID.Value.Count - 1; i++)
+                {
+                    for (int j = 0; j < ID.Value[i].Count; j++)
+                    {
+                        for (int k = 0; k < ID.Value[i + 1].Count; k++)
+                        {
+                            if (ID.Value[i + 1].Count > j && ID.Value[i][j] < ID.Value[i + 1][k])
+                            {
+                                int y = ID.Value[i + 1][k] - ID.Value[i][j];
+                                if (y == 1)
+                                    Occurence++;
+                            }
+                        }
+                    }
+                }
+                //Law 3adad el tokens 3 masln we el document fiha 2 bas fa ba7ot + abl el URL 3shan a3lmha enha uncommon result
+                string URL = ID.Key;
+                if (ID.Value.Count < Tokens.Length || Occurence == 0)
+                {
+                    URL = "+" + ID.Key;
+                }
+                if (Results.ContainsKey(Occurence))
+                {
+                    Results[Occurence].Add(URL);
+                }
+                else
+                {
+                    List<string> temp = new List<string>();
+                    temp.Add(URL);
+                    Results.Add(Occurence, temp);
+                }
+            }
+            return Results;
+        }
+        class DescendingComparer<T> : IComparer<T> where T : IComparable<T>
+        {
+            public int Compare(T x, T y)
+            {
+                return y.CompareTo(x);
+            }
+        }
 
-			//select a.Position as A
-			//from(select d.Term, p.ID, p.TermID, p.DocNum, p.Freq, p.Position from[Dictionary] d,[Posting] p where d.ID = p.TermID and d.Term = 'search')a , 
-			// (select d.Term , p.ID ,p.TermID,p.DocNum,p.Freq,p.Position from[Dictionary] d ,[Posting] p where d.ID = p.TermID and d.Term='music') b
-			//where a.DocNum=b.DocNum
-
-			foreach (var b in wordsList)
-			{
-
-
-				//    List<> positionA = new List;
-				SqlConnection connection = new SqlConnection(connectionString);
-				string command = "select a.DocNum, a.Position AS A , b.Position AS B from(select d.Term, p.ID, p.TermID, p.DocNum, p.Freq, p.Position from[Dictionary] d,[Posting] p where d.ID = p.TermID and d.Term = 'search')a ,(select d.Term , p.ID ,p.TermID,p.DocNum,p.Freq,p.Position from[Dictionary] d ,[Posting] p where d.ID = p.TermID and d.Term='music') b where a.DocNum=b.DocNum";
-				SqlCommand cmd = new SqlCommand(command, connection);
-				connection.Open();
-
-				string TempPositionA = "";
-				string[] TempPositionAString = new string[1000];
-				List<int> PositionAList = new List<int>();
-
-				string TempPositionB = "";
-				string[] TempPositionBString = new string[1000];
-				List<int> PositionBList = new List<int>();
-				using (SqlDataReader reader = cmd.ExecuteReader())
-				{
-					while (reader.Read())
-					{
-						int documentNumber = Int32.Parse(reader["DocNum"].ToString());
-
-						TempPositionA = reader["A"].ToString();
-						TempPositionB = reader["B"].ToString();
-
-						TempPositionAString = TempPositionA.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-						TempPositionBString = TempPositionB.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-						for (int i = 0; i < TempPositionAString.Length; i++)
-						{
-							try
-							{
-								PositionAList.Add(Int32.Parse(TempPositionAString[i]));
-								PositionBList.Add(Int32.Parse(TempPositionBString[i]));
-							}
-							catch
-							{ }
-						}
-
-						//Now you have list for each  word -- complete here 
-
-
-
-
-
-					}
-					int z = 2;
-				}
-			}
-
-
-
-		}
-		public Dictionary<string, List<Tuple<string, int>>> SoundexSearch(string[] words)
+        public Dictionary<string, List<Tuple<string, int>>> SoundexSearch(string[] words)
 		{
 			SqlConnection connection = new SqlConnection(connectionString);
             Dictionary<string, List<Tuple<string, int>>> Results = new Dictionary<string, List<Tuple<string, int>>>();
