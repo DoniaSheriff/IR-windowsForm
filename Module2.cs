@@ -14,7 +14,7 @@ namespace IR_milestone
         static string connectionString = "Data Source=ABANOUB\\SQLEXPRESS;Initial Catalog=College;Integrated Security=True";
 
         //Term, List of DocumentIds
-       static public Dictionary<string, List<int>> SpellCheckIndex = new Dictionary<string, List<int>>();
+        static public Dictionary<string, List<int>> SpellCheckIndex = new Dictionary<string, List<int>>();
         //Term, Dictionary<DocumentId, List of positions>
         public Dictionary<string, Dictionary<int, List<int>>> InvertedIndex = new Dictionary<string, Dictionary<int, List<int>>>();
         static Dictionary<string, bool> StopWords = new Dictionary<string, bool>
@@ -336,6 +336,7 @@ namespace IR_milestone
         { "yourself", true },
         { "yourselves", true }
     };
+
         public void Indexing(string Text, int docID)
         {
             //Remove Punctuation and numbers
@@ -391,6 +392,7 @@ namespace IR_milestone
             }
 
             //Create Inverted Index
+            //Term, Dictionary<DocumentId, List of positions>
             foreach (var x in Tokens_Stem)
             {
                 if (InvertedIndex.ContainsKey(x.Item1))
@@ -443,7 +445,6 @@ namespace IR_milestone
 
             return soundexString.PadRight(4, '0');
         }
-
 
         public void spellcheckModule()
         {

@@ -18,6 +18,7 @@ namespace IR_milestone
             InitializeComponent();
         }
         static string connectionString = "Data Source=ABANOUB\\SQLEXPRESS;Initial Catalog=College;Integrated Security=True";
+
         private void InvertedIndexButton_Click(object sender, EventArgs e)
         {
             //Fetch 1500 document from DB
@@ -101,7 +102,7 @@ namespace IR_milestone
             string command = "SELECT Term FROM SpellCheckModule;";
             SqlCommand cmd = new SqlCommand(command, connection);
             connection.Open();
-            //Fetches all Terms from InvertedIndex (Dictionary)
+            //Fetches all Terms from SpellCheckModule
             using (SqlDataReader reader = cmd.ExecuteReader())
             {
                 while (reader.Read())
@@ -154,7 +155,7 @@ namespace IR_milestone
             SqlCommand cmd = new SqlCommand(command, connection);
             connection.Open();
             string temp="",bigram;
-            //Gets all Terms from InvertedIndex table(Dictionary), 
+            //Gets all Terms from SpellCheckModule table(Dictionary), 
             //Splits each term into bigrams adding $ before and after the term, 
             //Adds to HashSet so all bigrams are unique
             using (SqlDataReader reader = cmd.ExecuteReader())
