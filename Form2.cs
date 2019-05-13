@@ -18,6 +18,7 @@ namespace IR_milestone
             InitializeComponent();
         }
         static string connectionString = "Data Source=ABANOUB\\SQLEXPRESS;Initial Catalog=College;Integrated Security=True";
+
         private void InvertedIndexButton_Click(object sender, EventArgs e)
         {
             //Fetch 1500 document from DB
@@ -34,7 +35,9 @@ namespace IR_milestone
                 }
             }
             connection.Close();
+
             SaveInvertedIndex(module2.InvertedIndex);
+            module2.spellcheckModule();
             MessageBox.Show("Done");
         }
 
@@ -94,11 +97,12 @@ namespace IR_milestone
         {
             Module2 module2 = new Module2();
             Dictionary<string, List<string>> SoundexIndex = new Dictionary<string, List<string>>();
+
             SqlConnection connection = new SqlConnection(connectionString);
-            string command = "SELECT Term FROM Dictionary;";
+            string command = "SELECT Term FROM SpellCheckModule;";
             SqlCommand cmd = new SqlCommand(command, connection);
             connection.Open();
-            //Fetches all Terms from InvertedIndex (Dictionary)
+            //Fetches all Terms from SpellCheckModule
             using (SqlDataReader reader = cmd.ExecuteReader())
             {
                 while (reader.Read())
@@ -147,11 +151,11 @@ namespace IR_milestone
             HashSet<string> BigramIndex = new HashSet<string>();
             Dictionary<string, string> BigramTable = new Dictionary<string, string>();
             SqlConnection connection = new SqlConnection(connectionString);
-            string command = "SELECT Term FROM Dictionary;";
+            string command = "SELECT Term FROM SpellCheckModule;";
             SqlCommand cmd = new SqlCommand(command, connection);
             connection.Open();
             string temp="",bigram;
-            //Gets all Terms from InvertedIndex table(Dictionary), 
+            //Gets all Terms from SpellCheckModule table(Dictionary), 
             //Splits each term into bigrams adding $ before and after the term, 
             //Adds to HashSet so all bigrams are unique
             using (SqlDataReader reader = cmd.ExecuteReader())
@@ -219,5 +223,11 @@ namespace IR_milestone
             connection.Close();
             MessageBox.Show("Done");
         }
+
+        private void Form2_Load(object sender, EventArgs e)
+        {
+
+        }        
     }
 }
+;
